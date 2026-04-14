@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UCL Top Trumps</title>
+  <style>
+    :root {
+      --bg: #f7f5ef;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --accent: #111827;
+      --border: #d1d5db;
+      --soft: #eef2ff;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .hero {
+      background: linear-gradient(135deg, #ede9fe, #dbeafe);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    .muted {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .choices,
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+      background: var(--primary);
+      color: white;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .secondary { background: var(--accent); }
+
+    .player-btn.selected { background: var(--primary-dark); }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #4338ca;
+      background: #e0e7ff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .table {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .pile {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 16px;
+      min-height: 500px;
+      box-shadow: var(--shadow);
+    }
+
+    .pile.active-turn {
+      outline: 3px solid rgba(79, 70, 229, 0.25);
+    }
+
+    .pile-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .tag {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+    }
+
+    .count {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: white;
+      min-height: 390px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-back {
+      min-height: 390px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #1f2937, #4f46e5);
+      color: white;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: pre-line;
+    }
+
+    .card-back.clickable {
+      cursor: pointer;
+    }
+
+    .card-image {
+      height: 200px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #fef3c7, #dbeafe);
+      font-size: 3rem;
+      font-weight: 900;
+      color: rgba(17, 24, 39, 0.85);
+    }
+
+    .card-body {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .card-years {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-top: -4px;
+    }
+
+    .card-desc {
+      min-height: 88px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: #374151;
+      border: 1px dashed #d1d5db;
+      border-radius: 10px;
+      padding: 10px;
+      background: #fafafa;
+      white-space: pre-line;
+    }
+
+    .stats {
+      display: grid;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fafafa;
+      font-size: 0.92rem;
+    }
+
+    .stat-row.selected {
+      background: #eef2ff;
+      border-color: #818cf8;
+    }
+
+    .stat-row button {
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      background: var(--primary);
+    }
+
+    .scoreboard,
+    .log {
+      display: grid;
+      gap: 10px;
+    }
+
+    .score-row,
+    .log-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fafafa;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .small {
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+
+    .contact-note {
+      margin-top: 18px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .learn-more-btn {
+      width: fit-content;
+    }
+
+    @media (max-width: 980px) {
+      .top,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section id="startScreen" class="screen active">
+      <div class="hero">
+        <h1>UCL Top Trumps</h1>
+        <p class="muted">
+          A browser-based Top Trumps prototype for a public history project.
+          Players choose the number of players, flip cards, choose one category,
+          reveal all players’ top cards, and then compare scores.
+        </p>
+
+        <h3>Choose number of players</h3>
+        <div class="choices">
+          <button type="button" class="player-btn selected" data-players="2">2 Players</button>
+          <button type="button" class="player-btn" data-players="3">3 Players</button>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="startBtn">Start Game</button>
+        </div>
+
+        <p class="contact-note">
+          If you notice any issues while playing, such as information errors or missing content, please feel free to contact us at:<br>
+          <b>clairediadubidubi@gmail.com</b>
+        </p>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="top">
+        <div class="panel">
+          <div class="badge">Game status</div>
+          <div id="statusText"></div>
+        </div>
+
+        <div class="panel">
+          <div class="badge">Round summary</div>
+          <div id="roundSummary">Click the active player's pile to flip the top card.</div>
+          <div class="actions">
+            <button type="button" id="revealAllBtn" disabled>Reveal Other Cards</button>
+            <button type="button" id="compareBtn" disabled>Compare Cards</button>
+            <button type="button" id="nextRoundBtn" disabled>Next Round</button>
+            <button type="button" id="restartBtn" class="secondary">Restart</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div id="table" class="table"></div>
+
+        <aside>
+          <div class="panel">
+            <h3>Scoreboard</h3>
+            <div id="scoreboard" class="scoreboard"></div>
+          </div>
+
+          <div class="panel" style="margin-top:16px;">
+            <h3>Game log</h3>
+            <div id="log" class="log"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const BASE_DECK = [
+      {
+        id: 1,
+        name: "Flinders Petrie",
+        years: "1853–1942",
+        short: `He was a British archaeologist and Egyptologist who helped establish Egyptology as an academic discipline at UCL. He introduced systematic excavation methods and careful recording techniques that shaped modern archaeology.
+
+However, Petrie’s work also involved racial classification and anthropometric research linked to eugenics and colonial thinking. Today, his legacy is debated, reflecting tensions between scientific innovation and problematic racial theories in university history.`,
+        image: "images/01.png",
+        moreText: `
+<p>Flinders Petrie’s legacy is deeply controversial due to his role as a leading proponent of scientific racism and eugenics, which he integrated into his archaeological work.</p>
+
+<p>Although Petrie is celebrated for developing systematic excavation methods, he viewed human history as a series of “racial conquests”, in which supposedly “superior” groups replaced “inferior” ones. At UCL, he also contributed anthropometric data that supported the work of eugenics pioneers such as Francis Galton.</p>
+
+<p>His 1907 book <i>Janus in Modern Life</i> revealed his extreme social Darwinist views. Petrie argued that welfare reforms, including old age pensions and infant healthcare, were forms of “sentimentalism” that interfered with natural selection and caused what he described as “racial degeneration”.</p>
+
+<p>The controversy surrounding Petrie also relates to how his legacy was shaped after his death. Early biographers and colleagues often minimized these views in order to preserve his professional reputation. Only more recent scholarship has begun to critically re-examine this aspect of his work and its place within UCL’s history.</p>
+
+`,
+        moreLink: "https://profjoecain.net/flinders-petrie-eugenics-ucl-janus-modern-life/#:~:text=This%20controversy%20centres%20on%20his%20views%20supporting%20scientific,archaeological%20work%20was%20directly%20linked%20to%20these%20beliefs.",
+        stats: {
+          influence: 90,
+          innovation: 95,
+          achievement: 90,
+          controversy: 95
+        }
+      },
+      {
+        id: 2,
+        name: "Kathleen Lonsdale",
+        years: "1903-1971",
+        short: `She was a crystallographer and the first woman professor at UCL, appointed in 1949. Her appointment marked an important breakthrough for women in higher education at a time when academia remained male-dominated.
+
+Beyond her scientific achievements, Lonsdale became a symbol of gender equality and changing academic culture at UCL, highlighting the slow but significant progress of women’s inclusion in university life.`,
+        image: "images/02.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 85,
+          innovation: 85,
+          achievement: 90,
+          controversy: 30
+        }
+      },
+      {
+        id: 3,
+        name: "William Ramsay",
+        years: "1903-1971",
+        short: `William Ramsay was a Scottish chemist best known for discovering the noble gases.
+
+He identified several elements, including argon, neon, krypton, and xenon, which are now part of the periodic table. These discoveries were important because they revealed a new group of chemically unreactive elements, changing how scientists understood atomic structure. For this work, he was awarded the Nobel Prize in Chemistry in 1904.
+
+Ramsay worked at UCL, where he carried out much of his research and helped build its reputation in chemistry.`,
+        image: "images/03.png",
+        moreText: `<p>Cleveite Sample and the Discovery of Helium </p>
+<p>This image shows a sample of cleveite used by William Ramsay in his discovery of helium. By studying gases released from this mineral, Ramsay was able to identify helium on Earth for the first time, a major breakthrough in chemistry.</p>
+<img src="images/WR01.jpg">
+<p>Nobel Prize Certificate (1904) </p>
+<p>This image shows the Nobel Prize certificate awarded to William Ramsay. It was issued by the Royal Swedish Academy of Sciences, recognising his major contributions to chemistry, particularly his discovery of the noble gases.</p>
+<img src="images/WR02.jpg">
+<p>Ramsay’s Discharge Tubes </p>
+<p>These glass discharge tubes were used by William Ramsay in his experiments to identify new gases. What makes these objects especially interesting is that Ramsay made them himself. By passing an electric current through the gases inside the tubes, he could observe different colours of light, which helped him distinguish between elements such as neon, krypton, and xenon.</p>
+<img src="images/WR03.jpg"> `,
+        moreLink: "https://blogs.ucl.ac.uk/museums/2013/10/25/ramsay-and-the-nobel-discovery/",
+        stats: {
+          influence: 90,
+          innovation: 95,
+          achievement: 100,
+          controversy: 10
+        }
+      },
+      {
+        id: 4,
+        name: "Thomas Campbell",
+        years: "1777-1844",
+        short: `He was a Scottish poet best known for works such as The Pleasures of Hope (1799). His poetry often focused on themes like freedom, human dignity, and social progress, which were widely appreciated in early nineteenth-century Britain.
+
+Beyond literature, Campbell played an important role in education. He was one of the key figures involved in the founding of UCL in 1826. At a time when universities like Oxford and Cambridge excluded many groups, Campbell supported the idea of a more open and inclusive institution. UCL was designed to admit students regardless of religion, which was a significant change in British higher education.`,
+        image: "images/04.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 90,
+          innovation: 70,
+          achievement: 90,
+          controversy: 40
+        }
+      },
+      {
+        id: 5,
+        name: "Isaac Lyon Goldsmid",
+        years: "1778-1859",
+        short: `He was a British financier and a leading figure in the movement for Jewish emancipation in the UK.
+
+Goldsmid is best known for his role in founding UCL in 1826. As a Jewish man, he was excluded from universities like Oxford and Cambridge, which required religious tests. Because of this, he strongly supported the creation of a new university that was open to students of all religious backgrounds.
+
+He was also an important political campaigner. Goldsmid worked to improve civil rights for Jewish people in Britain, helping to challenge laws that limited their participation in public life.`,
+        image: "images/05.png",
+        moreText: `Goldsmid’s University Shares (1826)
+This share certificate from 1826 shows Isaac Lyon Goldsmid as an official “proprietor” of UCL, meaning he financially invested in the university at the time it was founded. 
+The document reflects more than just money. It shows how individuals like Goldsmid actively shaped the direction of higher education. By investing in the university, he was supporting a new model of education that rejected religious restrictions and aimed to be open to people from different backgrounds.
+The formal design, with its detailed handwriting and signatures, highlights how important and official this role was.
+
+Religious Reform & Controversy within the Jewish community
+Isaac Lyon Goldsmid was closely involved in the founding of the West London Synagogue in the 1840s, one of the first Reform Jewish congregations in Britain. This synagogue introduced changes that made religious practice feel more suited to modern life at the time.
+For example, services became more structured and easier to follow, with greater use of English alongside Hebrew so that more people could understand what was being said. Some traditional rituals were simplified, and there was a stronger focus on the moral and ethical teachings of Judaism rather than strict adherence to every custom.
+However, this caused major controversy. Many traditional Jewish leaders strongly opposed these changes, seeing them as a break from established religious authority and customs. The founders, including Goldsmid, were even criticised and excluded by parts of the wider Jewish community.
+Despite this opposition, Goldsmid supported the movement because he believed religion, like education, should adapt to society and promote inclusion.
+<p>Learn more:</p>
+
+<ul>
+
+<li>
+<a href="https://uclpress.co.uk/book/the-world-of-ucl/" target="_blank">
+The World of UCL — UCL Press
+</a>
+</li>
+
+<li>
+<a href="https://www.jewishgen.org/jcr-uk/susser/roth/chfifteen.htm" target="_blank">
+Jewish Emancipation and Goldsmid
+</a>
+</li>
+
+</ul>`,
+        moreLink: "",
+        stats: {
+          influence: 90,
+          innovation: 75,
+          achievement: 95,
+          controversy: 70
+        }
+      },
+      {
+        id: 6,
+        name: "Bernard Katz",
+        years: "1911-2003",
+        short: `He was a German-born British neuroscientist who made major contributions to our understanding of how nerve cells communicate.
+
+He is best known for his research on synapses, particularly how chemical signals are released between nerve cells. For this, he was awarded the Nobel Prize in Physiology or Medicine in 1970.
+
+Katz spent much of his career at UCL, where he carried out his most important research. His work helped establish UCL as a leading centre for neuroscience and experimental physiology.`,
+        image: "images/06.png",
+        moreText: `<p>The Bernard Katz Building at UCL</p>
+<p>The Bernard Katz Building at University College London is named in honour of Bernard Katz and his groundbreaking work in neuroscience. Located on the Bloomsbury campus, the building is a major centre for research and teaching in areas such as neuroscience, physiology, and pharmacology.</p>
+<img src="images/Bernard Katz.png">
+<p>Awarded the Nobel Prize </p>
+<p>On 11 December 1970, Bernard Katz attended Nobel Week in Stockholm, where he received his Nobel Prize alongside Ulf von Euler and Julius Axelrod. The prize 
+recognised their discoveries about how chemical signals are stored and released in nerve cells. </p>
+<p>Learn more:</p>
+
+<ul>
+<li>
+<a href="https://www.londonremembers.com/memorials/sir-bernard-katz" target="_blank">
+UCL memorial — Sir Bernard Katz
+</a>
+</li>
+
+<li>
+<a href="https://www.nobelprize.org/prizes/medicine/1970/katz/photo-gallery/" target="_blank">
+Nobel Prize Photo Gallery
+</a>
+</li>
+
+</ul>`,
+        moreLink: "",
+        stats: {
+          influence: 90,
+          innovation: 95,
+          achievement: 100,
+          controversy: 20
+        }
+      },
+      {
+        id: 7,
+        name: "J. B. S. Haldane",
+        years: "1892-1964",
+        short: `He was a British scientist known for his major contributions to genetics and evolutionary biology.
+
+He is best known for helping to develop population genetics. His work connected Charles Darwin’s theory of natural selection with modern genetics, making evolution more scientifically precise. Haldane also wrote popular science essays, helping to make complex ideas more accessible to the public.
+
+Haldane worked at UCL, where he taught and carried out research. During his time there, he helped build UCL’s reputation in biology and genetics as a leading centre for scientific study.`,
+        image: "images/07.png",
+        moreText: `<p>MI5 Surveillance File on J.B.S. Haldane </p>
+<p>This image shows part of a file created by MI5 on J. B. S. Haldane. It includes photographs cut from newspapers and basic personal details such as his height, appearance, and passport information.</p>
+<img src="images/J.B.S. Haldane.jpg">
+<p>The file shows how closely Haldane was monitored because of his political views. As a well-known Communist during the early Cold War, he attracted attention from the government, even while working as a respected scientist at University College London.What is striking is the contrast in the document. On one hand, it records him in a very ordinary, almost administrative way. On the other, it reflects a wider climate of suspicion, where even leading academics could be treated as potential threats. This highlights how science and politics were closely connected at the time.</p>`,
+        moreLink: "https://blogs.ucl.ac.uk/sts-observatory/2017/07/",
+        stats: {
+          influence: 95,
+          innovation: 95,
+          achievement: 95,
+          controversy: 95
+        }
+      },
+      {
+        id: 8,
+        name: "Karl Pearson",
+        years: "1857-1936",
+        short: `He was a British mathematician and statistician, known as one of the founders of modern statistics.
+
+He developed important statistical methods, including the correlation coefficient, which measures the relationship between variables, and the chi-square test, widely used in data analysis. His work helped turn statistics into a rigorous scientific discipline and is still used in many fields today.
+
+Pearson spent much of his career at University College London, where he founded the first university statistics department in the world. He also established the journal Biometrika, which became a key publication in statistics.`,
+        image: "images/08.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 95,
+          innovation: 100,
+          achievement: 100,
+          controversy: 100
+        }
+      },
+      {
+        id: 9,
+        name: "Althea Jones-LeCointe",
+        years: "1945-",
+        short: `She is a scientist and political activist, best known for her leadership in the British Black Power movement.
+
+She studied at UCL, biochemistry. Alongside her academic work, she became a key member and later leader of the British Black Panther Movement, campaigning against racism and inequality in Britain.
+
+Jones-LeCointe was one of the “Mangrove Nine,” a group of activists arrested and tried after protesting against police harassment in 1970. The trial became an important moment in British history, as it exposed racial discrimination in the legal system and led to greater public awareness of racial injustice.`,
+        image: "images/09.png",
+        moreText: `Mangrove Nine Trial Awareness Flyer, 1970
+
+This flyer was created in 1970 to raise public awareness about the Mangrove Nine trial, a key moment in the fight against racial injustice in Britain. 
+
+The trial involved Althea Jones-Lecointe and other members of the British Black Panther Movement, who were charged after protesting against police harassment. The case became highly significant, as it exposed racial bias within the legal system.
+`,
+        moreLink: "https://www.nacbs.org/post/althea-jones-lecointe",
+        stats: {
+          influence: 85,
+          innovation: 80,
+          achievement: 85,
+          controversy: 80
+        }
+      },
+      {
+        id: 10,
+        name: "Jamie Gardiner",
+        years: "No exact information-",
+        short: `He is an Australian human rights activist and former UCL PhD student, best known for founding one of the first LGBTQ+ student societies in the UK.
+
+He arrived at UCL in 1971 to study applied mathematics. In 1972, he founded UCL GaySoc (originally called the Homophile Society).  
+
+At the time, this was a bold step. LGBTQ+ rights were still highly contested, and although the society was approved, there was hidden opposition from some academics. Despite this, the group quickly became influential. Gardiner also helped push for national change, contributing to a 1973 National Union of Students motion supporting gay rights.`,
+        image: "images/10.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 80,
+          innovation: 75,
+          achievement: 85,
+          controversy: 70
+        }
+      },
+      {
+        id: 11,
+        name: "Hannah Steinberg",
+        years: "1920-2019",
+        short: `She was a British psychiatrist known for her work in mental health and drug research. She worked at UCL, where she became a professor and carried out research on how drugs affect the brain and behaviour. Her work helped develop the field of psychopharmacology, which studies how medications influence mental health.
+
+Steinberg was also important as one of the early female professors in her field at a time when women were underrepresented in science and medicine.`,
+        image: "images/11.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 80,
+          innovation: 85,
+          achievement: 85,
+          controversy: 30
+        }
+      },
+      {
+        id: 12,
+        name: "Karl Mannheim",
+        years: "1893-1947",
+        short: `He was a German-born sociologist, best known for his work on the sociology of knowledge.
+He is most famous for arguing that people’s ideas are shaped by their social background and historical context. In his book Ideology and Utopia (1929), he explored how different social groups develop different ways of thinking, especially in politics and society.
+
+Mannheim later worked in Britain and taught at the UCL Institute of Education. His work influenced the development of sociology of education, especially ideas about how education can shape social change and democracy.`,
+        image: "images/12.png",
+        moreText: `Biometrika Photograph Instructions (1908)
+This image shows a handwritten note by Karl Pearson, giving instructions for photographs to be published in Biometrika, a scientific journal he co-founded. The note refers to images from Jamaica, described in terms of “race mixing,” and includes detailed directions about how the photos should be edited and prepared for publication.
+
+The document reflects how early statistical science was sometimes used to study and classify human difference, often through a racial lens. This is controversial because Pearson was also a leading figure in the eugenics movement, which promoted ideas about ranking people based on heredity and race.
+
+Today, these ideas are widely criticised for reinforcing inequality and discrimination.`,
+        moreLink: "http://www.eugenicsarchive.org/html/eugenics/static/images/1965.html",
+        stats: {
+          influence: 90,
+          innovation: 90,
+          achievement: 90,
+          controversy: 65
+        }
+      },
+      {
+        id: 13,
+        name: "Henry Brougham",
+        years: "1778-1868",
+        short: `Henry Brougham played a central role in establishing UCL as a progressive alternative to Oxford and Cambridge, promoting wider access to education. Brougham’s relentless campaigning helped found UCL in 1826 despite hostile criticism. Though divisive, he championed education for workers and drove major reforms: expanded voting rights, abolished slavery, and defended liberals.`,
+        image: "images/13.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 95,
+          innovation: 85,
+          achievement: 95,
+          controversy: 80
+        }
+      },
+      {
+        id: 14,
+        name: "William Wilkins",
+        years: "1778-1839",
+        short: `He shaped the physical identity of UCL, designing its iconic building to reflect prestige and counter criticism. In the 1820s, six architects competed to design the Wilkins Building. Wilkins won with a neoclassical quadrangle and Corinthian portico. He later designed the National Gallery.`,
+        image: "images/14.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 75,
+          innovation: 70,
+          achievement: 85,
+          controversy: 40
+        }
+      },
+      {
+        id: 15,
+        name: "Archibald Vivian Hill",
+        years: "1886-1977",
+        short: `At UCL, physiologist Archibald Vivian Hill helped lay the foundations of biophysics, developing ultra-sensitive techniques to measure tiny heat changes in muscles and nerves. His Nobel Prize-winning research (1922) later connected science with war work and public policy`,
+        image: "images/15.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 90,
+          innovation: 95,
+          achievement: 100,
+          controversy: 60
+        }
+      },
+      {
+        id: 16,
+        name: "John Zachary Young",
+        years: "1907-1997",
+        short: `John Zachary Young was UCL’s Professor of Anatomy from 1945–1974, transforming the department by linking structure to function and building a thriving research culture that trained leading scientists. His squid giant axon research also reshaped modern neuroscience.`,
+        image: "images/16.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 85,
+          innovation: 90,
+          achievement: 85,
+          controversy: 30
+        }
+      },
+      {
+        id: 17,
+        name: "James Mill",
+        years: "1773-1836",
+        short: `James Mill backed UCL’s founding in 1826, supporting its aim to build a secular London university as an alternative to Oxford and Cambridge, open regardless of religion. He is also a controversial figure due to his connections to imperial ideology.`,
+        image: "images/17.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 90,
+          innovation: 75,
+          achievement: 85,
+          controversy: 90
+        }
+      },
+      {
+        id: 18,
+        name: "Ladipo Solanke",
+        years: "1886-1958",
+        short: `Ladipo Solanke studied law at UCL in the 1920s and co-founded the West African Students’ Union with Dr Herbert Bankole-Bright, creating a base for African students in London. He challenged racist media, promoted Yoruba culture, and raised funds for the Camden hostel “Africa House” (opened 1933), which became a hub for pan-African and anti-colonial organising, hosting future leaders like Jomo Kenyatta and Kwame Nkrumah.`,
+        image: "images/18.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 85,
+          innovation: 80,
+          achievement: 85,
+          controversy: 70
+        }
+      },
+      {
+        id: 19,
+        name: "Roger Lyons",
+        years: "1942-",
+        short: `Roger Lyons was UCL Students’ Union President in 1964 and a key organiser of UCL’s early anti-apartheid activism. He spearheaded plans for a scholarship to bring a Black South African student to study in London, helping raise funds, securing Lord Strang as patron, and holding major rallies in UCL’s main quadrangle. The scholarship scheme he launched became a flagship Students’ Union initiative, supporting Black South Africans to study at UCL and shaping UCL student politics for decades.`,
+        image: "images/19.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 75,
+          innovation: 70,
+          achievement: 80,
+          controversy: 75
+        }
+      },
+      {
+        id: 20,
+        name: "M. T. Z. Tyau",
+        years: "1888-1970",
+        short: `M. T. Z. Tyau was a Chinese UCL law student who arrived in London in 1909 and wrote about what international students actually faced there. He later built a major legal career, serving the Chinese Foreign Ministry and becoming a Supreme Court judge in the Republic of China.`,
+        image: "images/20.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 80,
+          innovation: 75,
+          achievement: 90,
+          controversy: 50
+        }
+      },
+      {
+        id: 21,
+        name: "Margaret Punnett",
+        years: "1867-1946",
+        short: `Margaret Punnett represents the often overlooked contributions of women in early scientific research at UCL. While less well known than leading figures, her presence reflects the gradual inclusion of women in academic and scientific fields. She was a key figure at the London Day Training College (later UCL’s Institute of Education). Joining in 1902, she became Vice-Principal in 1905 and stayed until 1933, training teachers, supporting women students, and helping reform arithmetic teaching nationally. Former students remembered her warmly (the rhyme: “If owt’s been dunn ‘ere, Miss Punnett’s dunnit.”). Her influence was so large that when she retired, the college replaced her workload with two staff members. In 2024, a room was finally named after her.`,
+        image: "images/21.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 80,
+          innovation: 70,
+          achievement: 85,
+          controversy: 20
+        }
+      },
+      {
+        id: 22,
+        name: "Lionel Elvin",
+        years: "1905-2005",
+        short: `Lionel Elvin shaped teacher education in London through his leadership of the University of London’s Institute of Education in Bloomsbury (part of today’s UCL IOE). From 1958 to 1973, he directed the Institute, backed reforms like the four-year BEd degree, pushed for a new building, and helped build its reputation for training teachers and influencing national education policy.`,
+        image: "images/22.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 85,
+          innovation: 75,
+          achievement: 90,
+          controversy: 35
+        }
+      },
+      {
+        id: 23,
+        name: "James Lighthill",
+        years: "1924-1998",
+        short: `James Lighthill was a mathematician and pioneer in fluid dynamics at UCL. His work contributed significantly to aerodynamics, engineering, and applied mathematics.
+
+Lighthill helped strengthen UCL’s reputation in scientific research, and his legacy continues through James Lighthill House, reflecting how academic achievements are commemorated within the university.`,
+        image: "images/23.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 85,
+          innovation: 90,
+          achievement: 90,
+          controversy: 40
+        }
+      },
+      {
+        id: 24,
+        name: "Alexander Maconochie",
+        years: "1787-1860",
+        short: `Alexander Maconochie was appointed the first Professor of Geography at UCL in 1833, one of the earliest geography posts in Britain. His appointment reflected the expansion of new academic disciplines during the nineteenth century.
+
+Maconochie helped establish geography as a university subject, illustrating how UCL contributed to the development of modern academic fields.`,
+        image: "images/24.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 70,
+          innovation: 75,
+          achievement: 80,
+          controversy: 20
+        }
+      },
+      {
+        id: 25,
+        name: "Han Suyin",
+        years: "1917-2012",
+        short: `Han Suyin was a Chinese-Belgian writer and medical student who studied at UCL during the Second World War. Her experience reflected the challenges faced by international students in wartime London.
+
+Han Suyin later became a well-known writer, and her story highlights UCL’s long-standing global connections and the experiences of international students in difficult historical contexts.`,
+        image: "images/25.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 75,
+          innovation: 65,
+          achievement: 80,
+          controversy: 50
+        }
+      },
+      {
+        id: 26,
+        name: "Mavis Batey",
+        years: "1921-2013",
+        short: `She was a UCL student who became a codebreaker at Bletchley Park during the Second World War. She helped decode German Enigma messages, contributing to Allied wartime intelligence.
+
+Her story connects student life at UCL to global historical events, showing how students played important roles beyond the university.`,
+        image: "images/26.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 85,
+          innovation: 70,
+          achievement: 90,
+          controversy: 20
+        }
+      },
+      {
+        id: 27,
+        name: "Percy Nunn",
+        years: "1870-1944",
+        short: `He was an educationalist at the Institute of Education and later director. His work influenced teacher education and education policy in Britain and across the British Empire.
+
+However, his leadership is now debated because the Institute of Education trained teachers and administrators for colonial education systems. Critics argue that this linked educational development with imperial governance, highlighting the relationship between education, power, and empire.`,
+        image: "images/27.png",
+        moreText: `
+<p>Percy Nunn was a leading figure in the development of teacher education at the Institute of Education. He promoted child-centred learning and helped establish education as a professional and scientific field.</p>
+
+<p>However, recent research has highlighted more complex aspects of his legacy. During Nunn’s leadership, teacher training was influenced by ideas linked to eugenics, including intelligence testing and the selection of the “right type” of teacher. These practices sometimes reinforced social and educational inequalities.</p>
+
+<p>The Institute of Education also played a role in training teachers for the British Empire. This connected educational development with imperial governance and the preparation of teachers for colonial education systems.</p>
+
+<p>Today, Nunn’s legacy is debated as historians reassess how progressive educational ideas coexisted with assumptions about race, class, and empire within early twentieth-century teacher education.</p>
+
+`,
+        moreLink: "https://discovery.ucl.ac.uk/id/eprint/10197625/33/Bhimani_10197625_thesis_prelims_revised.pdf",
+        stats: {
+          influence: 80,
+          innovation: 70,
+          achievement: 70,
+          controversy: 85
+        }
+      },
+      {
+        id: 28,
+        name: "William Taylor",
+        years: "1930-2023",
+        short: `He was Director of the Institute of Education from 1973 to 1985. His leadership coincided with a turbulent period of debates over overseas student quotas and the accessibility of British higher education to the international community.
+
+Taylor became a central figure of student protest when his refusal to formally oppose government restrictions on overseas students highlighted the growing divide between institutional pragmatism and student activism at the Institute.`,
+        image: "images/28.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 70,
+          innovation: 60,
+          achievement: 75,
+          controversy: 80
+        }
+      },
+      {
+        id: 29,
+        name: "Inoue Kaoru",
+        years: "1836-1915",
+        short: `He was one of the Chōshū Five, a group of Japanese students who secretly travelled to Britain and studied at UCL in 1863. After returning to Japan, he became a leading statesman during the Meiji period.
+
+Inoue played a key role in Japan’s modernisation and diplomacy, illustrating UCL’s early global influence.`,
+        image: "images/29.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 85,
+          innovation: 75,
+          achievement: 90,
+          controversy: 65
+        }
+      },
+      {
+        id: 30,
+        name: "Ito Hirobumi",
+        years: "1841-1909",
+        short: `He was a member of the Chōshū Five who studied at UCL in 1863. He later became Japan’s first Prime Minister and played a central role in drafting the Meiji Constitution.
+
+Ito’s education in Britain influenced Japan’s modern political system, highlighting UCL’s international impact in the nineteenth century.`,
+        image: "images/30.png",
+        moreText: "",
+        moreLink: "",
+        stats: {
+          influence: 95,
+          innovation: 80,
+          achievement: 95,
+          controversy: 70
+        }
+      }
+    ];
+
+    const PLAYER_LABELS = ["A", "B", "C"];
+    const MAX_ROUNDS = 60;
+
+    const state = {
+      playersCount: 2,
+      players: [],
+      currentPlayerIndex: 0,
+      selectedCategory: null,
+      roundCards: [],
+      pot: [],
+      round: 1,
+      phase: "await-flip",
+      gameOver: false
+    };
+
+    const startScreen = document.getElementById("startScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const nextRoundBtn = document.getElementById("nextRoundBtn");
+    const revealAllBtn = document.getElementById("revealAllBtn");
+    const compareBtn = document.getElementById("compareBtn");
+    const tableEl = document.getElementById("table");
+    const scoreboardEl = document.getElementById("scoreboard");
+    const logEl = document.getElementById("log");
+    const statusText = document.getElementById("statusText");
+    const roundSummary = document.getElementById("roundSummary");
+
+    document.querySelectorAll(".player-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".player-btn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        state.playersCount = Number(btn.dataset.players);
+      });
+    });
+
+    startBtn.addEventListener("click", startGame);
+    restartBtn.addEventListener("click", resetToStart);
+    nextRoundBtn.addEventListener("click", startNextRound);
+    revealAllBtn.addEventListener("click", revealOtherCards);
+    compareBtn.addEventListener("click", resolveRound);
+
+    function startGame() {
+      resetState();
+
+      const shuffledDeck = shuffle([...BASE_DECK]);
+      state.players = Array.from({ length: state.playersCount }, (_, i) => ({
+        id: i,
+        label: PLAYER_LABELS[i],
+        pile: [],
+        revealedCard: null
+      }));
+
+      shuffledDeck.forEach((card, index) => {
+        state.players[index % state.playersCount].pile.push(card);
+      });
+
+      startScreen.classList.remove("active");
+      gameScreen.classList.add("active");
+
+      log(`Game started. ${state.playersCount} players. Deck shuffled and dealt.`);
+      renderAll();
+    }
+
+    function resetState() {
+      state.players = [];
+      state.currentPlayerIndex = 0;
+      state.selectedCategory = null;
+      state.roundCards = [];
+      state.pot = [];
+      state.round = 1;
+      state.phase = "await-flip";
+      state.gameOver = false;
+
+      nextRoundBtn.disabled = true;
+      revealAllBtn.disabled = true;
+      compareBtn.disabled = true;
+
+      logEl.innerHTML = "";
+      closeWinner();
+      closeLearnMore();
+    }
+
+    function resetToStart() {
+      gameScreen.classList.remove("active");
+      startScreen.classList.add("active");
+      resetState();
+    }
+
+    function renderAll() {
+      renderTable();
+      renderScoreboard();
+      renderStatus();
+    }
+
+    function renderStatus() {
+      if (state.gameOver) {
+        const winner = getOverallWinner();
+        statusText.innerHTML = `
+          <strong>Game over.</strong><br>
+          Winner: Player ${winner.label} with ${winner.pile.length} card(s).<br>
+          Total rounds played: ${state.round - 1}.
+        `;
+        roundSummary.textContent = "Restart to play again.";
+        return;
+      }
+
+      const current = state.players[state.currentPlayerIndex];
+      const activePlayers = getActivePlayers().map(p => p.label).join(", ");
+
+      let phaseText = "";
+      if (state.phase === "await-flip") {
+        phaseText = `Player ${current.label}'s turn to flip a card.`;
+      } else if (state.phase === "await-category") {
+        phaseText = `Player ${current.label} should choose one category.`;
+      } else if (state.phase === "await-reveal") {
+        phaseText = `The category has been chosen. Reveal the other players' cards.`;
+      } else if (state.phase === "await-compare") {
+        phaseText = `All top cards are visible. Click “Compare Cards”.`;
+      } else if (state.phase === "resolved") {
+        phaseText = `Round resolved. Click “Next Round”.`;
+      }
+
+      statusText.innerHTML = `
+        <strong>Round ${state.round}</strong><br>
+        Active players: ${activePlayers}<br>
+        Pot cards waiting: ${state.pot.length}<br>
+        ${phaseText}
+      `;
+    }
+
+    function renderScoreboard() {
+      scoreboardEl.innerHTML = "";
+      state.players.forEach(player => {
+        const row = document.createElement("div");
+        row.className = "score-row";
+        row.innerHTML = `
+          <span><strong>Player ${player.label}</strong></span>
+          <span>${player.pile.length} card(s)</span>
+        `;
+        scoreboardEl.appendChild(row);
+      });
+    }
+
+    function renderTable() {
+      tableEl.innerHTML = "";
+
+      state.players.forEach((player, index) => {
+        const pile = document.createElement("div");
+        pile.className = "pile";
+
+        if (!state.gameOver && index === state.currentPlayerIndex && state.phase !== "resolved") {
+          pile.classList.add("active-turn");
+        }
+
+        pile.innerHTML = `
+          <div class="pile-head">
+            <div class="tag">${player.label}</div>
+            <div class="count">${player.pile.length} card(s)</div>
+          </div>
+        `;
+
+        if (player.pile.length === 0) {
+          pile.innerHTML += `<div class="card-back">No cards left</div>`;
+        } else {
+          const cardWrapper = document.createElement("div");
+          cardWrapper.className = "card";
+
+          if (!player.revealedCard) {
+            const back = document.createElement("div");
+            back.className = "card-back";
+            back.textContent = `Player ${player.label}\nClick to flip`;
+
+            if (index === state.currentPlayerIndex && state.phase === "await-flip") {
+              back.classList.add("clickable");
+              back.addEventListener("click", flipCurrentCard);
+            } else {
+              back.textContent = `Player ${player.label}\nCard face down`;
+            }
+
+            cardWrapper.appendChild(back);
+          } else {
+            const allowChoose =
+              index === state.currentPlayerIndex && state.phase === "await-category";
+            cardWrapper.appendChild(buildCardFace(player.revealedCard, allowChoose));
+          }
+
+          pile.appendChild(cardWrapper);
+        }
+
+        tableEl.appendChild(pile);
+      });
+    }
+
+    function buildCardFace(card, allowChoose) {
+      const wrapper = document.createElement("div");
+
+      wrapper.innerHTML = `
+        <div class="card-image">
+          ${
+            card.image
+              ? `<img src="${card.image}" alt="${card.name}" style="width:100%;height:100%;object-fit:cover;">`
+              : card.name.slice(0,2).toUpperCase()
+          }
+        </div>
+        <div class="card-body">
+          <div class="card-title">${card.name}</div>
+          <div class="card-years">${card.years}</div>
+          <div class="card-desc">${card.short}</div>
+          <button type="button" class="learn-more-btn">Learn More</button>
+          <div class="stats"></div>
+        </div>
+      `;
+
+      const statsEl = wrapper.querySelector(".stats");
+      const labels = {
+        influence: "Influence",
+        innovation: "Innovation",
+        achievement: "Achievement",
+        controversy: "Controversy"
+      };
+
+      Object.entries(card.stats).forEach(([key, value]) => {
+        const row = document.createElement("div");
+        row.className = "stat-row";
+        if (state.selectedCategory === key) row.classList.add("selected");
+
+        if (allowChoose) {
+          row.innerHTML = `
+            <span><strong>${labels[key]}</strong>: ${value}</span>
+            <button type="button" data-key="${key}">Choose</button>
+          `;
+          row.querySelector("button").addEventListener("click", () => chooseCategory(key));
+        } else {
+          row.innerHTML = `
+            <span><strong>${labels[key]}</strong>: ${value}</span>
+            <span>${value}</span>
+          `;
+        }
+
+        statsEl.appendChild(row);
+      });
+
+      const learnBtn = wrapper.querySelector(".learn-more-btn");
+      learnBtn.addEventListener("click", () => {
+        showLearnMore(card);
+      });
+
+      return wrapper;
+    }
+
+    function flipCurrentCard() {
+      if (state.phase !== "await-flip" || state.gameOver) return;
+
+      const current = state.players[state.currentPlayerIndex];
+      if (!current || current.pile.length === 0) return;
+
+      current.revealedCard = current.pile[0];
+      state.phase = "await-category";
+      roundSummary.textContent = `Player ${current.label} flipped "${current.revealedCard.name}". Choose a category.`;
+
+      renderAll();
+    }
+
+    function chooseCategory(category) {
+      if (state.phase !== "await-category" || state.gameOver) return;
+
+      state.selectedCategory = category;
+      state.phase = "await-reveal";
+      revealAllBtn.disabled = false;
+
+      roundSummary.textContent = `Category chosen: ${capitalize(category)}. Now click “Reveal Other Cards”.`;
+      renderAll();
+    }
+
+    function revealOtherCards() {
+      if (state.phase !== "await-reveal" || state.gameOver) return;
+
+      state.roundCards = [];
+      getActivePlayers().forEach(player => {
+        player.revealedCard = player.pile[0];
+        state.roundCards.push({
+          playerId: player.id,
+          playerLabel: player.label,
+          card: player.pile[0],
+          value: player.pile[0].stats[state.selectedCategory]
+        });
+      });
+
+      state.phase = "await-compare";
+      revealAllBtn.disabled = true;
+      compareBtn.disabled = false;
+
+      roundSummary.textContent = `All top cards are now visible. Click “Compare Cards” to determine the winner.`;
+      renderAll();
+    }
+
+    function resolveRound() {
+      if (state.phase !== "await-compare" || state.gameOver) return;
+
+      const max = Math.max(...state.roundCards.map(item => item.value));
+      const winners = state.roundCards.filter(item => item.value === max);
+
+      const playedCards = [];
+      state.roundCards.forEach(item => {
+        const player = state.players[item.playerId];
+        const removed = player.pile.shift();
+        player.revealedCard = null;
+        playedCards.push(removed);
+      });
+
+      if (winners.length === 1) {
+        const winner = state.players[winners[0].playerId];
+        const winnings = [...state.pot, ...playedCards];
+        winner.pile.push(...winnings);
+        state.pot = [];
+        state.currentPlayerIndex = winner.id;
+
+        roundSummary.textContent =
+          `Player ${winner.label} wins the round with ${capitalize(state.selectedCategory)} = ${max} and takes ${winnings.length} card(s).`;
+
+        log(`Round ${state.round}: Player ${winner.label} won with ${capitalize(state.selectedCategory)} = ${max}.`);
+      } else {
+        state.pot.push(...playedCards);
+        state.currentPlayerIndex = winners[0].playerId;
+
+        roundSummary.textContent =
+          `Tie on ${capitalize(state.selectedCategory)} = ${max}. ${playedCards.length} card(s) move to the pot.`;
+
+        log(`Round ${state.round}: Tie on ${capitalize(state.selectedCategory)} = ${max}. Pot now has ${state.pot.length} card(s).`);
+      }
+
+      state.phase = "resolved";
+      compareBtn.disabled = true;
+      nextRoundBtn.disabled = false;
+      checkGameEnd();
+      renderAll();
+    }
+
+    function startNextRound() {
+      if (state.phase !== "resolved" || state.gameOver) return;
+
+      state.round += 1;
+      state.selectedCategory = null;
+      state.roundCards = [];
+      state.phase = "await-flip";
+
+      nextRoundBtn.disabled = true;
+      revealAllBtn.disabled = true;
+      compareBtn.disabled = true;
+
+      normalizeCurrentPlayer();
+      roundSummary.textContent = `Click the active player's pile to flip the top card.`;
+      checkGameEnd();
+      renderAll();
+    }
+
+    function normalizeCurrentPlayer() {
+      const active = getActivePlayers();
+      if (!active.length) return;
+
+      const current = state.players[state.currentPlayerIndex];
+      if (!current || current.pile.length === 0) {
+        state.currentPlayerIndex = active[0].id;
+      }
+    }
+
+    function checkGameEnd() {
+      const activePlayers = getActivePlayers();
+
+      if (activePlayers.length <= 1) {
+        state.gameOver = true;
+        nextRoundBtn.disabled = true;
+        revealAllBtn.disabled = true;
+        compareBtn.disabled = true;
+        renderAll();
+        if (activePlayers[0]) {
+          log(`Game over. Player ${activePlayers[0].label} wins.`);
+          showWinner(activePlayers[0]);
+        }
+        return;
+      }
+
+      if (state.round > MAX_ROUNDS) {
+        state.gameOver = true;
+        nextRoundBtn.disabled = true;
+        revealAllBtn.disabled = true;
+        compareBtn.disabled = true;
+        renderAll();
+        const winner = getOverallWinner();
+        log(`Round limit reached. Player ${winner.label} wins with the most cards.`);
+      }
+    }
+
+    function getActivePlayers() {
+      return state.players.filter(player => player.pile.length > 0);
+    }
+
+    function getOverallWinner() {
+      return [...state.players].sort((a, b) => b.pile.length - a.pile.length)[0];
+    }
+
+    function log(message) {
+      const item = document.createElement("div");
+      item.className = "log-item";
+      item.textContent = message;
+      logEl.prepend(item);
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function showLearnMore(card) {
+  const overlay = document.getElementById("learnOverlay");
+
+  document.getElementById("learnTitle").innerText = card.name;
+
+  document.getElementById("learnContent").innerHTML =
+  card.moreText || " ";
+
+  const link = document.getElementById("learnLink");
+
+  if (card.moreLink) {
+    link.href = card.moreLink;
+    link.style.display = "inline-block";
+  } else {
+    link.style.display = "none";
+  }
+
+  overlay.style.display = "flex";
+  overlay.style.pointerEvents = "auto";
+}
+
+    function closeLearnMore() {
+      const overlay = document.getElementById("learnOverlay");
+      overlay.style.display = "none";
+      overlay.style.pointerEvents = "none";
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function showWinner(player) {
+      const overlay = document.getElementById("winnerOverlay");
+      overlay.style.display = "flex";
+      overlay.style.pointerEvents = "auto";
+
+      document.getElementById("winnerText").innerText =
+        `Player ${player.label} wins with ${player.pile.length} cards!`;
+    }
+
+    function closeWinner() {
+      const overlay = document.getElementById("winnerOverlay");
+      overlay.style.display = "none";
+      overlay.style.pointerEvents = "none";
+    }
+  </script>
+
+  <!-- winner popup -->
+  <div id="winnerOverlay" style="
+    display:none;
+    pointer-events:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+  ">
+    <div style="
+      background:white;
+      padding:30px;
+      border-radius:20px;
+      text-align:center;
+      animation: popIn 0.4s ease;
+    ">
+      <div id="winnerEmoji" style="font-size:3rem;">🎉👑🏆✨</div>
+      <h2 id="winnerTitle">Winner!</h2>
+      <p id="winnerText"></p>
+      <button type="button" onclick="closeWinner()">Close</button>
+    </div>
+  </div>
+
+  <!-- Learn More popup -->
+  <div id="learnOverlay" style="
+    display:none;
+    pointer-events:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+  ">
+    <div style="
+      background:white;
+      padding:30px;
+      border-radius:20px;
+      max-width:500px;
+      width:90%;
+      max-height:70vh;
+      overflow:auto;
+      animation: popIn 0.4s ease;
+    ">
+      <h2 id="learnTitle"></h2>
+
+      <p id="learnContent" style="
+        line-height:1.6;
+        margin:20px 0;
+        white-space:pre-line;
+      "></p>
+
+      <a
+        id="learnLink"
+        target="_blank"
+        style="
+          display:none;
+          margin-bottom:20px;
+          color:#4f46e5;
+          font-weight:600;
+        "
+      >
+        Learn more →
+      </a>
+
+      <br>
+
+      <button type="button" onclick="closeLearnMore()">Close</button>
+    </div>
+  </div>
+</body>
+</html>
